@@ -15,3 +15,6 @@ failed.sqlite	14-Jan-2023 13:13	1.1M
 gp_crawl.sqlite.7z	14-Jan-2023 13:34	8.3G(for image links/alternative fetches from hitomi.la)
 ```
 The gp_crawl is optional(but usage needs to be set in crates/exhentai-api/src/main.rs) when establishing connections. Put the databases into crates/exhentai-api/dbs.
+<br />
+<br />
+use the generator script in crates/exhentai-api/ to create missing dbs(runns diesel migrstion run ...)
