@@ -1,0 +1,38 @@
+// @generated automatically by Diesel CLI.
+
+diesel::table! {
+    gallery (gid) {
+        gid -> Integer,
+        title -> Nullable<Text>,
+        title_jpn -> Nullable<Text>,
+        category -> Nullable<Text>,
+        uploader -> Nullable<Text>,
+        posted -> Nullable<Integer>,
+        thumb -> Nullable<Text>,
+        filesize -> Nullable<Integer>,
+        filecount -> Nullable<Integer>,
+        expunged -> Nullable<Integer>,
+        torrentcount -> Nullable<Integer>,
+        torrents -> Nullable<Text>,
+        token -> Nullable<Text>,
+        rating -> Nullable<Float>,
+        artist -> Nullable<Text>,
+        group -> Nullable<Text>,
+        parody -> Nullable<Text>,
+        character -> Nullable<Text>,
+        female -> Nullable<Text>,
+        male -> Nullable<Text>,
+        language -> Nullable<Text>,
+        mixed -> Nullable<Text>,
+        other -> Nullable<Text>,
+        cosplayer -> Nullable<Text>,
+        rest -> Nullable<Text>,
+        parent_gid -> Nullable<Integer>,
+        parent_key -> Nullable<Text>,
+        first_gid -> Nullable<Integer>,
+        first_key -> Nullable<Text>,
+        disowned -> Nullable<Integer>,
+        removed -> Nullable<Integer>,
+        dumped -> Nullable<Integer>,
+    }
+}
