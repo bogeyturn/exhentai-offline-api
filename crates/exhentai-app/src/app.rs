@@ -1,6 +1,6 @@
 use crate::exhentai_struct::ExHentaiResponse;
 use egui::scroll_area::ScrollBarVisibility;
-use egui::{Key, ScrollArea, Spinner, Ui};
+use egui::{Color32, Key, ScrollArea, Spinner, Ui};
 use egui_extras::{Column, RetainedImage, TableBuilder};
 use poll_promise::Promise;
 use serde::Serialize;
@@ -94,14 +94,12 @@ impl SubPromise {
 
 impl Default for TemplateApp {
     fn default() -> Self {
+        let mut data = VecDeque::new();
+        for _ in 0..20 {
+            data.push_back(Data::default());
+        }
         Self {
-            data: VecDeque::from([
-                Data::default(),
-                Data::default(),
-                Data::default(),
-                Data::default(),
-                Data::default(),
-            ]),
+            data,
             rating: None,
             rating_req: None,
             host: "http://127.0.0.1:8080/".to_string(),
@@ -119,6 +117,10 @@ impl TemplateApp {
             default.host = host;
         }
         default
+    }
+
+    pub fn items(&self) -> Vec<(Color32, Vec<&'static str>)> {
+        vec![]
     }
 
     pub fn shift(&mut self) {
@@ -236,6 +238,7 @@ impl Rating {
 
 impl eframe::App for TemplateApp {
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        let labels = self.items();
         egui::CentralPanel::default().show(ctx, |ui| {
             let keys = ctx.input(|input| {
                 let v = &input.keys_down;
@@ -316,12 +319,13 @@ impl eframe::App for TemplateApp {
                                     .as_ref()
                                     .unwrap_or(&"Unknown".to_string())
                             ));
-                            scrollable("Tags Male", &v.categorize.tags.male, ui);
-                            scrollable("Tags Female", &v.categorize.tags.female, ui);
-                            scrollable("Tags Other", &v.categorize.tags.other, ui);
-                            scrollable("Tags Mixed", &v.categorize.tags.mixed, ui);
-                            scrollable("Tags Temp", &v.categorize.tags.temp, ui);
-                            scrollable("Parodies", &v.categorize.parody, ui);
+                            ui.label(format!("ID: {}", v.id));
+                            scrollable("Tags Male", &v.categorize.tags.male, ui, &labels);
+                            scrollable("Tags Female", &v.categorize.tags.female, ui, &labels);
+                            scrollable("Tags Other", &v.categorize.tags.other, ui, &labels);
+                            scrollable("Tags Mixed", &v.categorize.tags.mixed, ui, &labels);
+                            scrollable("Tags Temp", &v.categorize.tags.temp, ui, &labels);
+                            scrollable("Parodies", &v.categorize.parody, ui, &labels);
                             ui.heading(format!("Rating: {}", v.rating.unwrap_or(0.0)));
                         });
                         let screen = frame.info().window_info.size;
@@ -337,7 +341,7 @@ impl eframe::App for TemplateApp {
                         builder.body(|mut body| {
                             while !items.is_empty() {
                                 body.row(colums_height, |mut row| {
-                                    for _ in 0..self.columns as usize {
+                                    for _ in 0..self.columns {
                                         if items.is_empty() {
                                             break;
                                         }
@@ -375,7 +379,7 @@ impl eframe::App for TemplateApp {
     }
 }
 
-fn scrollable(id: &str, items: &Vec<String>, ui: &mut Ui) {
+fn scrollable(id: &str, items: &Vec<String>, ui: &mut Ui, arr: &[(Color32, Vec<&'static str>)]) {
     if items.is_empty() {
         return;
     }
@@ -387,6 +391,25 @@ fn scrollable(id: &str, items: &Vec<String>, ui: &mut Ui) {
             .id_source(id)
             .show(ui, |ui| {
                 ui.horizontal(|ui| {
+                    let mut items: Vec<&str> = items.iter().map(|v| v.as_str()).collect::<Vec<_>>();
+                    for section in arr {
+                        ui.style_mut().visuals.selection.bg_fill = section.0;
+                        let display = items
+                            .clone()
+                            .into_iter()
+                            .filter(|v| section.1.contains(v))
+                            .collect::<Vec<_>>();
+                        items = items
+                            .into_iter()
+                            .filter(|v| !display.contains(v))
+                            .collect::<Vec<_>>();
+                        for item in display {
+                            if ui.selectable_label(true, item).clicked() {
+                                //TODO:
+                            }
+                        }
+                    }
+
                     for item in items {
                         if ui.button(item).clicked() {
                             //TODO:
