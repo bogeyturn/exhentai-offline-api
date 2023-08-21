@@ -1,1 +1,5 @@
-CREATE TABLE IF NOT EXISTS ratings (id INTEGER PRIMARY KEY NOT NULL, same TEXT NULL, other_lang TEXT NULL, related TEXT NULL,rating INT NOT NULL );
+CREATE TABLE IF NOT EXISTS ratings
+(
+    id         int PRIMARY KEY NOT NULL,
+    rating     INT             NOT NULL
+);

@@ -13,10 +13,10 @@ pub struct ExHentaiResponse {
     id: i32,
     token: Option<String>,
     titles: Titles,
-    categorize: Categorize,
+    pub categorize: Categorize,
     owner: Owner,
     pub pages: PageInfo,
-    rating: Option<f32>,
+    rating: Option<f64>,
     pub relations: Relations,
 }
 
@@ -31,36 +31,51 @@ impl ExHentaiResponse {
     pub(crate) async fn new(conn: &Data<Mutex<Connections>>, id: i32) -> Result<Self> {
         let (last, mut imgs, categorize, owner, variants) = {
             let mut conn = conn.lock().unwrap();
-            let (mut fs, mut api, gp) = conn.get_services();
-            let item = api.get(id)?;
-            let items;
-            if let Some(v) = item.first_gid {
-                let parent = api.get(v)?;
-                let mut others = api.get_related(v)?;
-                others.insert(0, parent);
-                items = others;
-            } else {
-                items = vec![item];
-            }
+            let items = {
+                let mut api = conn.get_api_dump_service();
+                let item = api.get(id)?;
+                let items;
+                if let Some(v) = item.first_gid {
+                    let parent = api.get(v)?;
+                    let mut others = api.get_related(v)?;
+                    others.insert(0, parent);
+                    items = others;
+                } else {
+                    items = vec![item];
+                }
+                items
+            };
+
             let last = items.last().expect("Should be something");
             let mut imgs = vec![];
-            if fs.get(last.gid).is_err() {
+            let not_failed = { conn.get_failed_service().get(last.gid).is_err() };
+            if not_failed {
+                let gp = conn.get_crawl_service();
                 if let Some(mut gp) = gp {
                     if let Ok(data) = gp.get(last.gid) {
                         let i = data.image_pages.unwrap_or_else(|| "[]".to_string());
                         imgs = serde_json::from_str::<Vec<Image>>(&process_json(&i))
                             .unwrap()
                             .iter()
-                            .map(|v| (v.image_thumb.to_string(), v.image_url.to_string()))
+                            .map(|v| {
+                                (
+                                    v.image_thumb
+                                        .to_string()
+                                        .replace("https://ul.ehgt.org", "https://ehgt.org"),
+                                    v.image_url.to_string(),
+                                )
+                            })
                             .collect();
                     }
                 }
             }
+
             let owner = Owner {
                 uploader: last.uploader.clone(),
-                group: extract_values(items.iter().filter_map(|v| v.group.clone()).collect()),
+                group: extract_values(items.iter().filter_map(|v| v.group_name.clone()).collect()),
                 artist: extract_values(items.iter().filter_map(|v| v.artist.clone()).collect()),
             };
+
             let categorize = Categorize {
                 category: last.category.clone(),
                 tags: Tags {
@@ -88,6 +103,9 @@ impl ExHentaiResponse {
         let (languages, related) = match hitomi {
             None => (vec![], vec![]),
             Some((lang, related, files)) => {
+                if imgs.len() == files.len() {
+                    imgs.clear();
+                }
                 if imgs.is_empty() {
                     files.iter().for_each(|v| {
                         imgs.push(("".to_string(), v.hash.clone()));
@@ -141,8 +159,8 @@ struct Titles {
 }
 
 #[derive(Debug, Serialize)]
-struct Categorize {
-    category: Option<String>,
+pub struct Categorize {
+    pub category: Option<String>,
     tags: Tags,
     parody: Vec<String>,
     language: Vec<String>,

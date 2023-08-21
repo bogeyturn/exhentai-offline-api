@@ -1,7 +1,6 @@
-use crate::schema_failed::failed::dsl;
+use crate::schema::failed::dsl;
 use anyhow::Result;
-use diesel::prelude::*;
-use diesel::SqliteConnection;
+use diesel::{ExpressionMethods, PgConnection, QueryDsl, Queryable, RunQueryDsl};
 use serde::Serialize;
 
 #[derive(Debug, Serialize, Queryable)]
@@ -11,7 +10,7 @@ pub struct Failed {
 }
 
 pub struct FailedSerice<'a> {
-    pub conn: &'a mut SqliteConnection,
+    pub conn: &'a mut PgConnection,
 }
 
 impl<'a> FailedSerice<'a> {

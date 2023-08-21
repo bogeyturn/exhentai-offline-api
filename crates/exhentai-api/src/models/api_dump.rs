@@ -1,6 +1,6 @@
-use crate::schema_api_dump::gallery::dsl;
+use crate::schema::ex_gallery::dsl;
 use anyhow::Result;
-use diesel::{ExpressionMethods, QueryDsl, Queryable, RunQueryDsl, SqliteConnection};
+use diesel::{ExpressionMethods, PgConnection, QueryDsl, Queryable, RunQueryDsl};
 use serde::Serialize;
 
 #[derive(Debug, Serialize, Queryable, Clone)]
@@ -18,9 +18,9 @@ pub struct ApiDump {
     pub torrentcount: Option<i32>,
     pub torrents: Option<String>,
     pub token: Option<String>,
-    pub rating: Option<f32>,
+    pub rating: Option<f64>,
     pub artist: Option<String>,
-    pub group: Option<String>,
+    pub group_name: Option<String>,
     pub parody: Option<String>,
     pub character: Option<String>,
     pub female: Option<String>,
@@ -40,18 +40,18 @@ pub struct ApiDump {
 }
 
 pub struct ApiDumpService<'a> {
-    pub conn: &'a mut SqliteConnection,
+    pub conn: &'a mut PgConnection,
 }
 
 impl<'a> ApiDumpService<'a> {
     pub fn get(&mut self, id: i32) -> Result<ApiDump> {
-        let results = dsl::gallery
+        let results = dsl::ex_gallery
             .filter(dsl::gid.eq(id))
             .first::<ApiDump>(self.conn)?;
         Ok(results)
     }
     pub fn get_related(&mut self, id: i32) -> Result<Vec<ApiDump>> {
-        let results = dsl::gallery
+        let results = dsl::ex_gallery
             .filter(dsl::first_gid.eq(id))
             .load::<ApiDump>(self.conn)?;
         Ok(results)

@@ -2,75 +2,66 @@ use crate::models::api_dump::ApiDumpService;
 use crate::models::failed::FailedSerice;
 use crate::models::gp_crawl::GpCrawlService;
 use crate::models::ratings::RatingService;
-use diesel::{Connection, SqliteConnection};
+use diesel::{Connection, PgConnection, SqliteConnection};
 use dotenvy::dotenv;
 use std::env;
 
 pub struct Connections {
-    api_dump_conn: SqliteConnection,
-    failed_conn: SqliteConnection,
+    conn: PgConnection,
     gp_crawl_service_conn: Option<SqliteConnection>,
-    rating_conn: SqliteConnection,
 }
 
 impl Connections {
     pub fn new(big: bool) -> Self {
-        let api_dump_conn = establish_connection(Database::ApiDump);
-        let failed_conn = establish_connection(Database::Failed);
-        let rating_conn = establish_connection(Database::Rating);
+        let conn = establish_connection_postgres();
         let gp_crawl_service_conn = match big {
-            true => Some(establish_connection(Database::GpCrawled)),
+            true => Some(establish_connection_sqlite()),
             false => None,
         };
         Self {
-            api_dump_conn,
-            failed_conn,
+            conn,
             gp_crawl_service_conn,
-            rating_conn,
         }
     }
-    pub fn get_services(&mut self) -> (FailedSerice, ApiDumpService, Option<GpCrawlService>) {
-        let api_dump_service = ApiDumpService {
-            conn: &mut self.api_dump_conn,
-        };
-        let failed_service = FailedSerice {
-            conn: &mut self.failed_conn,
-        };
-
-        let mut gp_crawl_service = None;
-        if let Some(conn) = &mut self.gp_crawl_service_conn {
-            gp_crawl_service = Some(GpCrawlService { conn });
+    pub fn get_failed_service(&mut self) -> FailedSerice {
+        FailedSerice {
+            conn: &mut self.conn,
         }
-        (failed_service, api_dump_service, gp_crawl_service)
+    }
+
+    pub fn get_crawl_service(&mut self) -> Option<GpCrawlService> {
+        if let Some(conn) = &mut self.gp_crawl_service_conn {
+            Some(GpCrawlService { conn })
+        } else {
+            None
+        }
+    }
+
+    pub fn get_api_dump_service(&mut self) -> ApiDumpService {
+        ApiDumpService {
+            conn: &mut self.conn,
+        }
     }
 
     pub fn get_rating_service(&mut self) -> RatingService {
         RatingService {
-            conn: &mut self.rating_conn,
+            conn: &mut self.conn,
         }
     }
 }
 
-pub fn establish_connection(db: Database) -> SqliteConnection {
+pub fn establish_connection_sqlite() -> SqliteConnection {
     dotenv().ok();
-    let dbpath = format!(
-        "DATABASE_URL_{}",
-        match db {
-            Database::Failed => "FAILED",
-            Database::ApiDump => "API_DUMP",
-            Database::GpCrawled => "GP_CRAWL",
-            Database::Rating => "RATING",
-        }
-    );
+    let dbpath = "DATABASE_URL_GP_CRAWL";
 
     let database_url = env::var(dbpath).expect("DATABASE_URL must be set");
     SqliteConnection::establish(&database_url)
         .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
 }
 
-pub enum Database {
-    Failed,
-    ApiDump,
-    GpCrawled,
-    Rating,
+pub fn establish_connection_postgres() -> PgConnection {
+    dotenv().ok();
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    PgConnection::establish(&database_url)
+        .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
 }

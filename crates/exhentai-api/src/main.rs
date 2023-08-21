@@ -1,5 +1,4 @@
 use crate::connections::Connections;
-use crate::models::ratings::Rating;
 use crate::responses::ExHentaiResponse;
 use crate::streamer::byte_stream;
 use actix_web::middleware::Logger;
@@ -12,10 +11,9 @@ mod connections;
 mod hitomi;
 mod models;
 mod responses;
-mod schema_api_dump;
-mod schema_failed;
+mod schema;
 mod schema_gp_crawl;
-mod schema_rating;
+mod search;
 mod streamer;
 
 #[derive(Deserialize)]
@@ -46,82 +44,94 @@ async fn get_entry(
     Json(ExHentaiResponse::new(&conn, data.entry).await.unwrap())
 }
 
-#[post("/get_next_entry")]
-async fn get_next_entry(
-    data: Json<EntryRequestOption>,
-    conn: Data<Mutex<Connections>>,
-) -> Json<ExHentaiResponse> {
-    let id = data
-        .entry
-        .unwrap_or_else(|| conn.lock().unwrap().get_rating_service().get_last());
-    get_next_entry_internal(id, conn, false).await
-}
+// #[post("/get_next_entry")]
+// async fn get_next_entry(
+//     data: Json<EntryRequestOption>,
+//     conn: Data<Mutex<Connections>>,
+// ) -> Json<ExHentaiResponse> {
+//     let id = data
+//         .entry
+//         .unwrap_or_else(|| conn.lock().unwrap().get_rating_service().get_last());
+//     //get_next_entry_internal(id, conn, false).await
+// }
+//
+// #[post("/add_rating")]
+// async fn add_rating(data: Json<Rating>, conn: Data<Mutex<Connections>>) -> Json<ExHentaiResponse> {
+//     let id = data.id;
+//     let v = conn
+//         .lock()
+//         .unwrap()
+//         .get_rating_service()
+//         .add(data.into_inner());
+//     //get_next_entry_internal(id, conn, true).await
+// }
 
-#[post("/add_rating")]
-async fn add_rating(data: Json<Rating>, conn: Data<Mutex<Connections>>) -> Json<ExHentaiResponse> {
-    let id = data.id;
-    conn.lock()
-        .unwrap()
-        .get_rating_service()
-        .add(data.into_inner())
-        .unwrap();
-    get_next_entry_internal(id, conn, true).await
-}
-
-async fn get_next_entry_internal(
-    mut id: i32,
-    conn: Data<Mutex<Connections>>,
-    add: bool,
-) -> Json<ExHentaiResponse> {
-    loop {
-        id += 1;
-        let v = ExHentaiResponse::new(&conn, id).await;
-        match v {
-            Ok(v) => {
-                let mut rs = conn.lock().unwrap();
-                let checked = rs.get_rating_service().check_get(id);
-                if v.pages.page_count == 0 || v.pages.page_count as usize != v.pages.pages.len() {
-                    if add {
-                        rs.get_rating_service().add(Rating::new_err(id)).unwrap()
-                    }
-                } else if let Ok(c) = checked {
-                    if c.id == id {
-                        continue;
-                    } else if add {
-                        let cto = |ve: &Vec<i32>| match ve.is_empty() {
-                            true => None,
-                            false => Some(
-                                serde_json::to_string(
-                                    &ve.iter().map(|v| v.to_string()).collect::<Vec<_>>(),
-                                )
-                                .unwrap(),
-                            ),
-                        };
-                        let rating = Rating {
-                            id,
-                            same: cto(&v.relations.variants),
-                            other_lang: cto(&v.relations.languages),
-                            related: cto(&v.relations.related),
-                            rating: c.rating,
-                        };
-                        let _ = rs.get_rating_service().add(rating);
-                    }
-                } else {
-                    return Json(v);
-                }
-            }
-            Err(_) => {
-                if add {
-                    conn.lock()
-                        .unwrap()
-                        .get_rating_service()
-                        .add(Rating::new_err(id))
-                        .unwrap()
-                }
-            }
-        }
-    }
-}
+// async fn get_next_entry_internal(
+//     mut id: i32,
+//     conn: Data<Mutex<Connections>>,
+//     add: bool,
+// ) -> Json<ExHentaiResponse> {
+//     loop {
+//         id += 1;
+//         let v = ExHentaiResponse::new(&conn, id).await;
+//         match v {
+//             Ok(v) => {
+//                 let mut rs = conn.lock().unwrap();
+//                 let checked = rs.get_rating_service().check_get(id);
+//                 if v.pages.page_count == 0 || v.pages.page_count as usize != v.pages.pages.len() {
+//                     let rt = if v.pages.page_count == 0 {
+//                         Rating::new_err3(id)
+//                     } else {
+//                         Rating::new_err2(id)
+//                     };
+//
+//                     if add {
+//                         let _ = rs.get_rating_service().add(rt);
+//                     }
+//                 } else if v.categorize.category == Some("Game CG".to_string())
+//                     || v.categorize.category == Some("Image Set".to_string())
+//                     || v.categorize.category == Some("Asian Porn".to_string())
+//                     || v.categorize.category == Some("Cosplay".to_string())
+//                 {
+//                     if add {
+//                         let _ = rs.get_rating_service().add(Rating::new_game(id));
+//                     }
+//                 } else if let Ok(c) = checked {
+//                     if c.id == id {
+//                         continue;
+//                     } else if add {
+//                         let cto = |ve: &Vec<i32>| match ve.is_empty() {
+//                             true => None,
+//                             false => Some(
+//                                 serde_json::to_string(
+//                                     &ve.iter().map(|v| v.to_string()).collect::<Vec<_>>(),
+//                                 )
+//                                 .unwrap(),
+//                             ),
+//                         };
+//                         let rating = Rating {
+//                             id,
+//                             rating: c.rating,
+//                         };
+//                         let _ = rs.get_rating_service().add(rating);
+//                     }
+//                     continue;
+//                 } else {
+//                     return Json(v);
+//                 }
+//             }
+//             Err(_) => {
+//                 if add {
+//                     let _ = conn
+//                         .lock()
+//                         .unwrap()
+//                         .get_rating_service()
+//                         .add(Rating::new_err(id));
+//                 }
+//             }
+//         }
+//     }
+// }
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -132,8 +142,8 @@ async fn main() -> std::io::Result<()> {
             .app_data(Data::new(Mutex::new(Connections::new(true))))
             .service(get_hitomi_images)
             .service(get_entry)
-            .service(add_rating)
-            .service(get_next_entry)
+        // .service(add_rating)
+        // .service(get_next_entry)
     })
     .bind(("127.0.0.1", 8080))?
     .bind((local_ip_address::local_ip().unwrap().to_string(), 8080))?
