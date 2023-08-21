@@ -1,3 +1,4 @@
+use diesel::serialize::ToSql;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
@@ -5,6 +6,38 @@ use std::fmt::Display;
 struct SearchRequest {
     data: Array,
     order: Order,
+    duplicate_filter: Option<Vec<String>>,
+}
+
+impl ToString for SearchRequest {
+    fn to_string(&self) -> String {
+        let query = match self.data.to_string() {
+            Some(v) => format!(" WHERE {}", v),
+            None => String::new(),
+        };
+        let db_name = "ex_gallery";
+        let join_table = "p_mixed";
+        let db = match &self.duplicate_filter {
+            None => db_name.to_string(),
+            Some(v) => {
+                let mut f = v
+                    .iter()
+                    .enumerate()
+                    .map(|(index, v)| {
+                        format!(
+                            "WHEN {} THEN {index+1}",
+                            array("language", "", &save_sql_str(v))
+                        )
+                    })
+                    .collect::<Vec<_>>();
+                f.push(format!("ELSE {}", v.len() + 1));
+                let s = v.join(", ");
+                format!("SELECT DISTINCT ON ({join_table}.p) * FROM {db_name} JOIN {join_table} ON {db_name}.gid = {join_table}.gid ORDER BY {db_name}.p, CASE {f} END, CASE WHEN {join_table}.p IN ({s}) THEN {db_name}.gid ELSE -{db_name}.gid END DESC) t", f = f.join(" "))
+            }
+        };
+        let sql = format!("SELECT * FROM {}{};", db, query);
+        sql
+    }
 }
 
 #[test]
