@@ -65,6 +65,10 @@ Future plans:
 Download from https://huggingface.co/datasets/bogeyturn/exhentai-api-dump?not-for-all-audiences=true
 failed.csv 936 kB
 gallery.csv 1.45 GB
+p_mixed.csv 32.8 MB
+
+Download from https://huggingface.co/datasets/bogeyturn/Hitomila-metadata-dump?not-for-all-audiences=true
+hitomi_gallery.zip
 
 Download from https://sukebei.nyaa.si/view/3914574
 gp_crawl.sqlite.7z
