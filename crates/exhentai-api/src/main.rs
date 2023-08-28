@@ -1,50 +1,39 @@
 use crate::connections::Connections;
-use crate::generate_p_mixed::{get_for_id, run};
-use crate::responses::ExHentaiResponse;
-use crate::streamer::byte_stream;
 use actix_web::middleware::Logger;
-use actix_web::web::{Data, Json};
-use actix_web::{post, App, HttpResponse, HttpServer};
-use serde::Deserialize;
+use actix_web::web::Data;
+use actix_web::{App, HttpServer};
 use std::sync::Mutex;
 
+mod api;
 mod connections;
-mod generate_p_mixed;
+#[cfg(feature = "dev")]
+mod dev;
+#[cfg(feature = "file_stream")]
 mod hitomi;
 mod models;
-mod responses;
 mod schema;
+#[cfg(feature = "complete_offline")]
 mod schema_gp_crawl;
-mod search;
+#[cfg(feature = "file_stream")]
 mod streamer;
 
-#[derive(Deserialize)]
-struct HitomiImages {
-    hashs: Vec<String>,
-}
+// #[derive(Deserialize)]
+// struct EntryRequest {
+//     entry: i32,
+// }
+//
+// #[derive(Deserialize)]
+// struct EntryRequestOption {
+//     entry: Option<i32>,
+// }
 
-#[derive(Deserialize)]
-struct EntryRequest {
-    entry: i32,
-}
-
-#[derive(Deserialize)]
-struct EntryRequestOption {
-    entry: Option<i32>,
-}
-
-#[post("/get_hitomi_images")]
-async fn get_hitomi_images(data: Json<HitomiImages>) -> HttpResponse {
-    byte_stream(data.into_inner().hashs).await
-}
-
-#[post("/get_entry")]
-async fn get_entry(
-    data: Json<EntryRequest>,
-    conn: Data<Mutex<Connections>>,
-) -> Json<ExHentaiResponse> {
-    Json(ExHentaiResponse::new(&conn, data.entry).await.unwrap())
-}
+// #[post("/get_entry")]
+// async fn get_entry(
+//     data: Json<EntryRequest>,
+//     conn: Data<Mutex<Connections>>,
+// ) -> Json<ExHentaiResponse> {
+//     Json(ExHentaiResponse::new(&conn, data.entry).await.unwrap())
+// }
 
 // #[post("/get_next_entry")]
 // async fn get_next_entry(
@@ -137,16 +126,18 @@ async fn get_entry(
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    //get_for_id(123);
-    //run();
-    panic!();
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
     HttpServer::new(|| {
-        App::new()
+        let app = App::new()
             .wrap(Logger::default())
-            .app_data(Data::new(Mutex::new(Connections::new(true))))
-            .service(get_hitomi_images)
-            .service(get_entry)
+            .app_data(Data::new(Mutex::new(Connections::new())))
+            .service(api::search_ex)
+            .service(api::create_filter)
+            .service(api::update_filter);
+        #[cfg(feature = "file_stream")]
+        let app = app.service(api::get_hitomi_images);
+        app
+        // .service(get_entry)
         // .service(add_rating)
         // .service(get_next_entry)
     })

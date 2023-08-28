@@ -1,27 +1,32 @@
 use crate::models::api_dump::ApiDumpService;
 use crate::models::failed::FailedSerice;
+#[cfg(feature = "complete_offline")]
 use crate::models::gp_crawl::GpCrawlService;
+#[cfg(feature = "dev")]
 use crate::models::hitomi::HitomiService;
+#[cfg(feature = "dev")]
 use crate::models::p_mixed::PMixedService;
 use crate::models::ratings::RatingService;
-use diesel::{Connection, PgConnection, SqliteConnection};
+#[cfg(feature = "complete_offline")]
+use diesel::SqliteConnection;
+use diesel::{Connection, PgConnection};
 use dotenvy::dotenv;
 use std::env;
 
 pub struct Connections {
     conn: PgConnection,
-    gp_crawl_service_conn: Option<SqliteConnection>,
+    #[cfg(feature = "complete_offline")]
+    gp_crawl_service_conn: SqliteConnection,
 }
 
 impl Connections {
-    pub fn new(big: bool) -> Self {
+    pub fn new() -> Self {
         let conn = establish_connection_postgres();
-        let gp_crawl_service_conn = match big {
-            true => Some(establish_connection_sqlite()),
-            false => None,
-        };
+        #[cfg(feature = "complete_offline")]
+        let gp_crawl_service_conn = establish_connection_sqlite();
         Self {
             conn,
+            #[cfg(feature = "complete_offline")]
             gp_crawl_service_conn,
         }
     }
@@ -31,11 +36,10 @@ impl Connections {
         }
     }
 
-    pub fn get_crawl_service(&mut self) -> Option<GpCrawlService> {
-        if let Some(conn) = &mut self.gp_crawl_service_conn {
-            Some(GpCrawlService { conn })
-        } else {
-            None
+    #[cfg(feature = "complete_offline")]
+    pub fn get_crawl_service(&mut self) -> GpCrawlService {
+        GpCrawlService {
+            conn: &mut self.gp_crawl_service_conn,
         }
     }
 
@@ -51,12 +55,14 @@ impl Connections {
         }
     }
 
+    #[cfg(feature = "dev")]
     pub fn get_hitomi_service(&mut self) -> HitomiService {
         HitomiService {
             conn: &mut self.conn,
         }
     }
 
+    #[cfg(feature = "dev")]
     pub fn get_p_mixed_service(&mut self) -> PMixedService {
         PMixedService {
             conn: &mut self.conn,
@@ -64,6 +70,7 @@ impl Connections {
     }
 }
 
+#[cfg(feature = "complete_offline")]
 pub fn establish_connection_sqlite() -> SqliteConnection {
     dotenv().ok();
     let dbpath = "DATABASE_URL_GP_CRAWL";

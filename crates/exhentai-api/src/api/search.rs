@@ -1,25 +1,27 @@
-use crate::connections::{establish_connection_postgres, Connections};
-use crate::models::api_dump::ApiDump;
-use diesel::serialize::ToSql;
-use diesel::{sql_query, RunQueryDsl};
+use crate::connections::Connections;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
 #[derive(Serialize, Deserialize)]
-struct SearchRequest {
+pub struct SearchRequest {
     data: Array,
     order: Order,
     duplicate_filter: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]
-struct FilterRequest {
+pub struct FilterRequest {
     filter: Vec<String>,
     name: String,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct UpdateFilterRequest {
+    pub name: String,
+}
+
 impl FilterRequest {
-    fn generate_materialized_view(&self, conn: &mut Connections) {
+    pub fn generate_materialized_view(&self, conn: &mut Connections) {
         let db_name = "ex_gallery";
         let join_table = "p_mixed";
 
@@ -37,7 +39,6 @@ impl FilterRequest {
         let mv_name = format!("{}_{}", self.name, db_name);
         let sql = format!("CREATE MATERIALIZED VIEW {mv_name} AS SELECT DISTINCT ON ({join_table}.p) ex_gallery.* FROM {db_name} JOIN {join_table} ON {db_name}.gid = {join_table}.gid ORDER BY {join_table}.p, CASE {f} END, CASE WHEN ({s}) THEN {db_name}.gid ELSE -{db_name}.gid END DESC", f = f.join(" "), s = s.join(" OR "));
         conn.get_api_dump_service().execute(&sql).unwrap();
-        //REFRESH MATERIALIZED VIEW my_materialized_view;
         //https://www.postgresql.org/docs/current/rules-materializedviews.html
     }
 }
@@ -57,49 +58,6 @@ impl ToString for SearchRequest {
         let sql = format!("SELECT * FROM {}{} LIMIT 10;", db, query);
         sql
     }
-}
-
-fn generate_mv() {
-    let mut conn = Connections::new(false);
-    FilterRequest {
-        filter: vec!["english".to_string()],
-        name: "english".to_string(),
-    }
-    .generate_materialized_view(&mut conn);
-}
-
-#[test]
-fn run_search() {
-    let arr = Array {
-        or: true,
-        items: vec![
-            ItemOrArray::Array(Array {
-                or: true,
-                items: vec![],
-            }),
-            ItemOrArray::Item(Item {
-                not: false,
-                data: ItemData::Tag {
-                    tag: "test".to_string(),
-                    kind: TagKind::All,
-                },
-            }),
-        ],
-    };
-
-    let sr = SearchRequest {
-        data: arr,
-        order: Order {
-            desc: false,
-            kind: OrderKind::Id,
-        },
-        duplicate_filter: Some("english".to_string()),
-    };
-    let mut conn = Connections::new(false);
-    let res = conn.get_api_dump_service().execute(&sr.to_string());
-
-    println!("{:#?}", res);
-    panic!()
 }
 
 fn save_sql_str(str: &str) -> String {
@@ -138,7 +96,7 @@ impl ItemOrArray {
 }
 
 #[derive(Serialize, Deserialize)]
-struct Array {
+pub struct Array {
     or: bool,
     items: Vec<ItemOrArray>,
 }
@@ -161,13 +119,13 @@ impl Array {
 }
 
 #[derive(Serialize, Deserialize)]
-struct Item {
+pub struct Item {
     not: bool,
     data: ItemData,
 }
 
 #[derive(Serialize, Deserialize)]
-enum ItemData {
+pub enum ItemData {
     Id { related: bool, id: i32 },
     Title(String),
     Category(String),
@@ -261,7 +219,7 @@ fn rating_filecount(not: bool, mut bigger: bool, mut eq: bool, number: impl Disp
 }
 
 #[derive(Serialize, Deserialize)]
-enum TagKind {
+pub enum TagKind {
     Female,
     Male,
     Mixed,
