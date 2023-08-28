@@ -49,15 +49,18 @@ url: http://localhost:8080/info, body: 9, content-type: json
 ```
 
 <br />
-<br /
+<br />
 Future plans:
+
 - Frontend
 - Error handling
 - exhentai pages
 - hitomi & exhentai fetch from web option
+
 <br />
-<br />
+
 ## Setup:
+
 ```
 Download from https://huggingface.co/datasets/bogeyturn/exhentai-api-dump?not-for-all-audiences=true
 failed.csv 936 kB
@@ -66,9 +69,10 @@ gallery.csv 1.45 GB
 Download from https://sukebei.nyaa.si/view/3914574
 gp_crawl.sqlite.7z
 ```
+
 The gp_crawl is optional and need to be set in features. Put the sqlite file into crates/exhentai-api/dbs.
-Install postgres
-Create postgres database offline_doujinshi_api
-Create user postgres with no password
-Create tables in crates/exhentai-api/migrations
-Insert data into tables from csv files
+- Install postgres
+- Create postgres database offline_doujinshi_api
+- Create user postgres with no password
+- Create tables in crates/exhentai-api/migrations
+- Insert data into tables from csv files
