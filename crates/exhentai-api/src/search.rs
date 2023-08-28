@@ -9,7 +9,37 @@ use std::fmt::Display;
 struct SearchRequest {
     data: Array,
     order: Order,
-    duplicate_filter: Option<Vec<String>>,
+    duplicate_filter: Option<String>,
+}
+
+#[derive(Serialize, Deserialize)]
+struct FilterRequest {
+    filter: Vec<String>,
+    name: String,
+}
+
+impl FilterRequest {
+    fn generate_materialized_view(&self, conn: &mut Connections) {
+        let db_name = "ex_gallery";
+        let join_table = "p_mixed";
+
+        let s = self
+            .filter
+            .iter()
+            .map(|v| array("language", "", &save_sql_str(v)))
+            .collect::<Vec<_>>();
+        let mut f = s
+            .iter()
+            .enumerate()
+            .map(|(index, v)| format!("WHEN {} THEN {}", v, index + 1))
+            .collect::<Vec<_>>();
+        f.push(format!("ELSE {}", self.filter.len() + 1));
+        let mv_name = format!("{}_{}", self.name, db_name);
+        let sql = format!("CREATE MATERIALIZED VIEW {mv_name} AS SELECT DISTINCT ON ({join_table}.p) ex_gallery.* FROM {db_name} JOIN {join_table} ON {db_name}.gid = {join_table}.gid ORDER BY {join_table}.p, CASE {f} END, CASE WHEN ({s}) THEN {db_name}.gid ELSE -{db_name}.gid END DESC", f = f.join(" "), s = s.join(" OR "));
+        conn.get_api_dump_service().execute(&sql).unwrap();
+        //REFRESH MATERIALIZED VIEW my_materialized_view;
+        //https://www.postgresql.org/docs/current/rules-materializedviews.html
+    }
 }
 
 impl ToString for SearchRequest {
@@ -18,22 +48,10 @@ impl ToString for SearchRequest {
             Some(v) => format!(" WHERE {}", v),
             None => String::new(),
         };
-        let db_name = "ex_gallery";
-        let join_table = "p_mixed";
         let db = match &self.duplicate_filter {
-            None => db_name.to_string(),
+            None => "ex_gallery".to_string(),
             Some(v) => {
-                let s = v
-                    .iter()
-                    .map(|v| array("language", "", &save_sql_str(v)))
-                    .collect::<Vec<_>>();
-                let mut f = s
-                    .iter()
-                    .enumerate()
-                    .map(|(index, v)| format!("WHEN {} THEN {}", v, index + 1))
-                    .collect::<Vec<_>>();
-                f.push(format!("ELSE {}", v.len() + 1));
-                format!("(SELECT DISTINCT ON ({join_table}.p) * FROM {db_name} JOIN {join_table} ON {db_name}.gid = {join_table}.gid ORDER BY {join_table}.p, CASE {f} END, CASE WHEN ({s}) THEN {db_name}.gid ELSE -{db_name}.gid END DESC) t", f = f.join(" "), s = s.join(" OR "))
+                format!("{v}_ex_gallery")
             }
         };
         let sql = format!("SELECT * FROM {}{} LIMIT 10;", db, query);
@@ -41,8 +59,17 @@ impl ToString for SearchRequest {
     }
 }
 
+fn generate_mv() {
+    let mut conn = Connections::new(false);
+    FilterRequest {
+        filter: vec!["english".to_string()],
+        name: "english".to_string(),
+    }
+    .generate_materialized_view(&mut conn);
+}
+
 #[test]
-fn generate() {
+fn run_search() {
     let arr = Array {
         or: true,
         items: vec![
@@ -59,17 +86,17 @@ fn generate() {
             }),
         ],
     };
+
     let sr = SearchRequest {
         data: arr,
         order: Order {
             desc: false,
             kind: OrderKind::Id,
         },
-        duplicate_filter: Some(vec!["english".to_string()]),
+        duplicate_filter: Some("english".to_string()),
     };
-    println!("{}", sr.to_string());
-    let mut conn = establish_connection_postgres();
-    let res: Vec<ApiDump> = sql_query(sr.to_string()).load(&mut conn).unwrap();
+    let mut conn = Connections::new(false);
+    let res = conn.get_api_dump_service().execute(&sr.to_string());
 
     println!("{:#?}", res);
     panic!()

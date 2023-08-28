@@ -1,6 +1,9 @@
 use crate::schema::ex_gallery::dsl;
 use anyhow::Result;
-use diesel::{ExpressionMethods, PgConnection, QueryDsl, Queryable, QueryableByName, RunQueryDsl};
+use diesel::{
+    sql_query, ExpressionMethods, PgConnection, QueryDsl, QueryResult, Queryable, QueryableByName,
+    RunQueryDsl,
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, QueryableByName, Queryable, Clone)]
@@ -45,6 +48,9 @@ pub struct ApiDumpService<'a> {
 }
 
 impl<'a> ApiDumpService<'a> {
+    pub fn execute(&mut self, sql: &str) -> QueryResult<Vec<ApiDump>> {
+        sql_query(sql).load(self.conn)
+    }
     pub fn all_ids(
         &mut self,
     ) -> Vec<(
