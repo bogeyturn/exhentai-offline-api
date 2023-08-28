@@ -1,13 +1,12 @@
 use crate::models::api_dump::ApiDumpService;
 use crate::models::failed::FailedSerice;
-#[cfg(feature = "complete_offline")]
+#[cfg(feature = "ex_crawl_offline")]
 use crate::models::gp_crawl::GpCrawlService;
-#[cfg(feature = "dev")]
+#[cfg(feature = "hitomi_offline")]
 use crate::models::hitomi::HitomiService;
-#[cfg(feature = "dev")]
 use crate::models::p_mixed::PMixedService;
 use crate::models::ratings::RatingService;
-#[cfg(feature = "complete_offline")]
+#[cfg(feature = "ex_crawl_offline")]
 use diesel::SqliteConnection;
 use diesel::{Connection, PgConnection};
 use dotenvy::dotenv;
@@ -15,18 +14,18 @@ use std::env;
 
 pub struct Connections {
     conn: PgConnection,
-    #[cfg(feature = "complete_offline")]
+    #[cfg(feature = "ex_crawl_offline")]
     gp_crawl_service_conn: SqliteConnection,
 }
 
 impl Connections {
     pub fn new() -> Self {
         let conn = establish_connection_postgres();
-        #[cfg(feature = "complete_offline")]
+        #[cfg(feature = "ex_crawl_offline")]
         let gp_crawl_service_conn = establish_connection_sqlite();
         Self {
             conn,
-            #[cfg(feature = "complete_offline")]
+            #[cfg(feature = "ex_crawl_offline")]
             gp_crawl_service_conn,
         }
     }
@@ -36,7 +35,7 @@ impl Connections {
         }
     }
 
-    #[cfg(feature = "complete_offline")]
+    #[cfg(feature = "ex_crawl_offline")]
     pub fn get_crawl_service(&mut self) -> GpCrawlService {
         GpCrawlService {
             conn: &mut self.gp_crawl_service_conn,
@@ -55,14 +54,13 @@ impl Connections {
         }
     }
 
-    #[cfg(feature = "dev")]
+    #[cfg(feature = "hitomi_offline")]
     pub fn get_hitomi_service(&mut self) -> HitomiService {
         HitomiService {
             conn: &mut self.conn,
         }
     }
 
-    #[cfg(feature = "dev")]
     pub fn get_p_mixed_service(&mut self) -> PMixedService {
         PMixedService {
             conn: &mut self.conn,
@@ -70,7 +68,7 @@ impl Connections {
     }
 }
 
-#[cfg(feature = "complete_offline")]
+#[cfg(feature = "ex_crawl_offline")]
 pub fn establish_connection_sqlite() -> SqliteConnection {
     dotenv().ok();
     let dbpath = "DATABASE_URL_GP_CRAWL";

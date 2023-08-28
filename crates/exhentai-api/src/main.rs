@@ -12,28 +12,10 @@ mod dev;
 mod hitomi;
 mod models;
 mod schema;
-#[cfg(feature = "complete_offline")]
+#[cfg(feature = "ex_crawl_offline")]
 mod schema_gp_crawl;
 #[cfg(feature = "file_stream")]
 mod streamer;
-
-// #[derive(Deserialize)]
-// struct EntryRequest {
-//     entry: i32,
-// }
-//
-// #[derive(Deserialize)]
-// struct EntryRequestOption {
-//     entry: Option<i32>,
-// }
-
-// #[post("/get_entry")]
-// async fn get_entry(
-//     data: Json<EntryRequest>,
-//     conn: Data<Mutex<Connections>>,
-// ) -> Json<ExHentaiResponse> {
-//     Json(ExHentaiResponse::new(&conn, data.entry).await.unwrap())
-// }
 
 // #[post("/get_next_entry")]
 // async fn get_next_entry(
@@ -133,11 +115,11 @@ async fn main() -> std::io::Result<()> {
             .app_data(Data::new(Mutex::new(Connections::new())))
             .service(api::search_ex)
             .service(api::create_filter)
-            .service(api::update_filter);
+            .service(api::update_filter)
+            .service(api::get_info);
         #[cfg(feature = "file_stream")]
         let app = app.service(api::get_hitomi_images);
         app
-        // .service(get_entry)
         // .service(add_rating)
         // .service(get_next_entry)
     })

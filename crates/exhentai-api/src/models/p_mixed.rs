@@ -1,10 +1,5 @@
 use crate::schema::p_mixed;
-use anyhow::Result;
-use diesel::{
-    ExpressionMethods, Insertable, PgConnection, QueryDsl, QueryResult, Queryable, RunQueryDsl,
-    Selectable,
-};
-use serde::{Deserialize, Serialize};
+use diesel::{ExpressionMethods, Insertable, PgConnection, QueryDsl, Queryable, RunQueryDsl};
 
 pub struct PMixedService<'a> {
     pub conn: &'a mut PgConnection,

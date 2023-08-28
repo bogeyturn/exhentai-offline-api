@@ -46,11 +46,17 @@ impl<'a> RatingService<'a> {
         0
     }
 
-    //insert into table
     pub fn add(&mut self, rating: Rating) -> Result<()> {
         diesel::insert_into(ratings::table)
             .values(rating)
             .execute(self.conn)?;
         Ok(())
+    }
+
+    pub fn get(&mut self, id: i32) -> QueryResult<i32> {
+        dsl::ratings
+            .select(dsl::rating)
+            .filter(dsl::id.eq(id))
+            .first(self.conn)
     }
 }

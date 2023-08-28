@@ -1,9 +1,8 @@
 pub mod api_dump;
 pub mod failed;
-#[cfg(feature = "complete_offline")]
+#[cfg(feature = "ex_crawl_offline")]
 pub mod gp_crawl;
-#[cfg(feature = "dev")]
+#[cfg(feature = "hitomi_offline")]
 pub mod hitomi;
-#[cfg(feature = "dev")]
 pub mod p_mixed;
 pub mod ratings;

@@ -6,7 +6,7 @@ use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
 
 pub fn get_for_id(id: i32) {
-    let mut conn = Connections::new(false);
+    let mut conn = Connections::new();
     let ids = conn.get_p_mixed_service().get(id);
     let mut api_dump = conn.get_api_dump_service();
     for v in ids {
@@ -21,7 +21,7 @@ pub fn get_for_id(id: i32) {
 }
 
 pub fn run() {
-    let mut conn = Connections::new(false);
+    let mut conn = Connections::new();
     let mut h: HashMap<i32, Arc<Mutex<HashSet<i32>>>> = HashMap::new();
     //gid, first_gid, parent_gid, filecount, artist, group_name
     let items = conn.get_api_dump_service().all_ids();

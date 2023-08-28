@@ -1,6 +1,5 @@
 use crate::schema::hitomi_gallery;
 use crate::schema::hitomi_gallery::dsl;
-use anyhow::Result;
 use diesel::{
     ExpressionMethods, Insertable, PgConnection, QueryDsl, QueryResult, Queryable, RunQueryDsl,
 };
@@ -51,6 +50,23 @@ impl<'a> HitomiService<'a> {
                 hitomi_gallery::artists,
                 hitomi_gallery::groups,
             ))
+            .first(self.conn)
+    }
+
+    pub fn get_related(&mut self, id: i32) -> QueryResult<Option<String>> {
+        dsl::hitomi_gallery
+            .filter(hitomi_gallery::id.eq(id))
+            .select(hitomi_gallery::related)
+            .first(self.conn)
+    }
+
+    pub fn get_hashs_and_related(
+        &mut self,
+        id: i32,
+    ) -> QueryResult<(Option<String>, Option<String>)> {
+        dsl::hitomi_gallery
+            .filter(hitomi_gallery::id.eq(id))
+            .select((hitomi_gallery::files, hitomi_gallery::related))
             .first(self.conn)
     }
 }

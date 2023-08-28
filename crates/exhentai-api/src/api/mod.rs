@@ -1,4 +1,5 @@
-use crate::api::search::{FilterRequest, SearchRequest, UpdateFilterRequest};
+use crate::api::info::{get_from_db, ExHentaiResponse};
+use crate::api::search::{FilterRequest, SearchRequest};
 #[cfg(feature = "file_stream")]
 use crate::api::streamer::HitomiImages;
 use crate::connections::Connections;
@@ -12,6 +13,7 @@ use actix_web::{
 };
 use std::sync::Mutex;
 
+mod info;
 mod search;
 #[cfg(feature = "file_stream")]
 mod streamer;
@@ -37,17 +39,11 @@ pub async fn create_filter(data: Json<FilterRequest>, conn: Data<Mutex<Connectio
 }
 
 #[post("/update_search_filter")]
-pub async fn update_filter(
-    data: Json<UpdateFilterRequest>,
-    conn: Data<Mutex<Connections>>,
-) -> Json<()> {
+pub async fn update_filter(data: Json<String>, conn: Data<Mutex<Connections>>) -> Json<()> {
     conn.lock()
         .unwrap()
         .get_api_dump_service()
-        .execute(&format!(
-            "REFRESH MATERIALIZED VIEW {}_ex_gallery;",
-            data.name
-        ))
+        .execute(&format!("REFRESH MATERIALIZED VIEW {}_ex_gallery;", data.0))
         .unwrap();
     Json(())
 }
@@ -56,4 +52,9 @@ pub async fn update_filter(
 #[post("/get_hitomi_images")]
 pub async fn get_hitomi_images(data: Json<HitomiImages>) -> HttpResponse {
     byte_stream(data.into_inner().hashs).await
+}
+
+#[post("/info")]
+pub async fn get_info(data: Json<i32>, conn: Data<Mutex<Connections>>) -> Json<ExHentaiResponse> {
+    Json(get_from_db(&mut conn.lock().unwrap(), data.0, true))
 }
