@@ -47,6 +47,65 @@ url: http://localhost:8080/info, body: 9, content-type: json
     "hitomi_backup": true
 }
 ```
+Search Request Structure:
+
+```js
+{
+  "data": Array,
+  "order": {
+    "desc": bool,
+    "kind": String //Options: Id, Title
+  },
+  "duplicate_filter": String
+}
+```
+
+Array:
+```js
+{
+  "or": bool,
+  "items": Array[] | Item[]
+}
+```
+
+Item:
+```js
+{
+  "not": bool,
+  "data": ItemData
+}
+```
+ItemData:
+```js
+{
+  "Tag": {
+    "tag": String,
+    "kind": String //Options: Female,Male,Mixed,Other,Rest,All
+  }
+}
+```
+ItemData:
+```js
+{"Artist": String}
+```
+All ItemData variants in rust
+```rs        
+pub enum ItemData {
+  Id { related: bool, id: i32 },
+  Title(String),
+  Category(String),
+  Artist(String),
+  Group(String),
+  Uploader(String),
+  Filecount { eq: bool, bigger: bool, count: i32 },
+  Rating { eq: bool, bigger: bool, rating: f32 },
+  Parody(String),
+  Character(String),
+  Tag { tag: String, kind: TagKind },
+  Language(String),
+  Cosplayer(String),
+}
+```
 
 <br />
 <br />
