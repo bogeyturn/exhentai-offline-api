@@ -1,4 +1,5 @@
 use crate::connections::Connections;
+use crate::generate_p_mixed::{get_for_id, run};
 use crate::responses::ExHentaiResponse;
 use crate::streamer::byte_stream;
 use actix_web::middleware::Logger;
@@ -8,6 +9,7 @@ use serde::Deserialize;
 use std::sync::Mutex;
 
 mod connections;
+mod generate_p_mixed;
 mod hitomi;
 mod models;
 mod responses;
@@ -135,6 +137,9 @@ async fn get_entry(
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    //get_for_id(123);
+    //run();
+    panic!();
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
     HttpServer::new(|| {
         App::new()

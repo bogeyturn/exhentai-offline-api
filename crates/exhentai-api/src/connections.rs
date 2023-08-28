@@ -1,6 +1,8 @@
 use crate::models::api_dump::ApiDumpService;
 use crate::models::failed::FailedSerice;
 use crate::models::gp_crawl::GpCrawlService;
+use crate::models::hitomi::HitomiService;
+use crate::models::p_mixed::PMixedService;
 use crate::models::ratings::RatingService;
 use diesel::{Connection, PgConnection, SqliteConnection};
 use dotenvy::dotenv;
@@ -45,6 +47,18 @@ impl Connections {
 
     pub fn get_rating_service(&mut self) -> RatingService {
         RatingService {
+            conn: &mut self.conn,
+        }
+    }
+
+    pub fn get_hitomi_service(&mut self) -> HitomiService {
+        HitomiService {
+            conn: &mut self.conn,
+        }
+    }
+
+    pub fn get_p_mixed_service(&mut self) -> PMixedService {
+        PMixedService {
             conn: &mut self.conn,
         }
     }

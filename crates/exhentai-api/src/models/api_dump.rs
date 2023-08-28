@@ -1,9 +1,10 @@
 use crate::schema::ex_gallery::dsl;
 use anyhow::Result;
-use diesel::{ExpressionMethods, PgConnection, QueryDsl, Queryable, RunQueryDsl};
-use serde::Serialize;
+use diesel::{ExpressionMethods, PgConnection, QueryDsl, Queryable, QueryableByName, RunQueryDsl};
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Queryable, Clone)]
+#[derive(Debug, Serialize, Deserialize, QueryableByName, Queryable, Clone)]
+#[diesel(table_name = crate::schema::ex_gallery)]
 pub struct ApiDump {
     pub gid: i32,
     pub title: Option<String>,
@@ -44,6 +45,28 @@ pub struct ApiDumpService<'a> {
 }
 
 impl<'a> ApiDumpService<'a> {
+    pub fn all_ids(
+        &mut self,
+    ) -> Vec<(
+        i32,
+        Option<i32>,
+        Option<i32>,
+        Option<i32>,
+        Option<String>,
+        Option<String>,
+    )> {
+        dsl::ex_gallery
+            .select((
+                dsl::gid,
+                dsl::first_gid,
+                dsl::parent_gid,
+                dsl::filecount,
+                dsl::artist,
+                dsl::group_name,
+            ))
+            .load(self.conn)
+            .unwrap()
+    }
     pub fn get(&mut self, id: i32) -> Result<ApiDump> {
         let results = dsl::ex_gallery
             .filter(dsl::gid.eq(id))

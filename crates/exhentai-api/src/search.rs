@@ -1,4 +1,7 @@
+use crate::connections::{establish_connection_postgres, Connections};
+use crate::models::api_dump::ApiDump;
 use diesel::serialize::ToSql;
+use diesel::{sql_query, RunQueryDsl};
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
@@ -20,22 +23,20 @@ impl ToString for SearchRequest {
         let db = match &self.duplicate_filter {
             None => db_name.to_string(),
             Some(v) => {
-                let mut f = v
+                let s = v
+                    .iter()
+                    .map(|v| array("language", "", &save_sql_str(v)))
+                    .collect::<Vec<_>>();
+                let mut f = s
                     .iter()
                     .enumerate()
-                    .map(|(index, v)| {
-                        format!(
-                            "WHEN {} THEN {index+1}",
-                            array("language", "", &save_sql_str(v))
-                        )
-                    })
+                    .map(|(index, v)| format!("WHEN {} THEN {}", v, index + 1))
                     .collect::<Vec<_>>();
                 f.push(format!("ELSE {}", v.len() + 1));
-                let s = v.join(", ");
-                format!("SELECT DISTINCT ON ({join_table}.p) * FROM {db_name} JOIN {join_table} ON {db_name}.gid = {join_table}.gid ORDER BY {db_name}.p, CASE {f} END, CASE WHEN {join_table}.p IN ({s}) THEN {db_name}.gid ELSE -{db_name}.gid END DESC) t", f = f.join(" "))
+                format!("(SELECT DISTINCT ON ({join_table}.p) * FROM {db_name} JOIN {join_table} ON {db_name}.gid = {join_table}.gid ORDER BY {join_table}.p, CASE {f} END, CASE WHEN ({s}) THEN {db_name}.gid ELSE -{db_name}.gid END DESC) t", f = f.join(" "), s = s.join(" OR "))
             }
         };
-        let sql = format!("SELECT * FROM {}{};", db, query);
+        let sql = format!("SELECT * FROM {}{} LIMIT 10;", db, query);
         sql
     }
 }
@@ -58,8 +59,19 @@ fn generate() {
             }),
         ],
     };
+    let sr = SearchRequest {
+        data: arr,
+        order: Order {
+            desc: false,
+            kind: OrderKind::Id,
+        },
+        duplicate_filter: Some(vec!["english".to_string()]),
+    };
+    println!("{}", sr.to_string());
+    let mut conn = establish_connection_postgres();
+    let res: Vec<ApiDump> = sql_query(sr.to_string()).load(&mut conn).unwrap();
 
-    println!("{}", arr.to_string().unwrap());
+    println!("{:#?}", res);
     panic!()
 }
 

@@ -74,10 +74,17 @@ diesel::table! {
 }
 
 diesel::table! {
+    p_mixed (gid) {
+        gid -> Int4,
+        p -> Nullable<Int4>,
+    }
+}
+
+diesel::table! {
     ratings (id) {
         id -> Int4,
         rating -> Int4,
     }
 }
 
-diesel::allow_tables_to_appear_in_same_query!(ex_gallery, failed, hitomi_gallery, ratings,);
+diesel::allow_tables_to_appear_in_same_query!(ex_gallery, failed, hitomi_gallery, p_mixed, ratings,);
