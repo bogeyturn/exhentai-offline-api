@@ -5,8 +5,6 @@ use std::env;
 use url::Url;
 use crate::page_selector::GlobalStorage;
 
-// hide console window on Windows in release
-mod exhentai_struct;
 mod structs;
 mod page_selector;
 mod page_info;
