@@ -2,11 +2,15 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use std::env;
-use crate::app::TemplateApp;
+use url::Url;
+use crate::page_selector::GlobalStorage;
 
 // hide console window on Windows in release
-mod app;
 mod exhentai_struct;
+mod structs;
+mod page_selector;
+mod page_info;
+mod page_search;
 
 // When compiling natively:
 #[cfg(not(target_arch = "wasm32"))]
@@ -14,13 +18,13 @@ fn main() -> eframe::Result<()> {
     let args:Vec<String> = env::args().collect();
     // Log to stdout (if you run with `RUST_LOG=debug`).
     tracing_subscriber::fmt::init();
-    let url = args.get(1).map(|v|v.to_string());
+    let url = args.get(1).map(|v|Url::parse(v).unwrap());
 
     let native_options = eframe::NativeOptions::default();
     eframe::run_native(
-        "ExRating",
+        "ExHentaiSearch",
         native_options,
-        Box::new(|cc| Box::new(TemplateApp::new(url, cc))),
+        Box::new(|cc| Box::new(GlobalStorage::new(url))),
     )
 }
 

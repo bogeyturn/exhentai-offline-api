@@ -135,15 +135,6 @@ impl TemplateApp {
         }
     }
 
-    fn add_column(&mut self) {
-        self.columns += 1;
-    }
-
-    fn remove_column(&mut self) {
-        if self.columns > 1 {
-            self.columns -= 1;
-        }
-    }
     pub fn get_first_and_load(&mut self, ctx: &egui::Context) -> &mut Data {
         let mut id: Option<i32> = None;
         let mut item = None;
@@ -240,23 +231,6 @@ impl eframe::App for TemplateApp {
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         let labels = self.items();
         egui::CentralPanel::default().show(ctx, |ui| {
-            let keys = ctx.input(|input| {
-                let v = &input.keys_down;
-                let items = v
-                    .iter()
-                    .filter_map(|v| match self.keys.contains(v) {
-                        true => None,
-                        false => Some(*v),
-                    })
-                    .collect::<HashSet<_>>();
-                self.keys = v.clone();
-                items
-            });
-            if keys.contains(&Key::J) {
-                self.remove_column();
-            } else if keys.contains(&Key::K) {
-                self.add_column();
-            }
             if let Some(v) = &self.rating_req {
                 if v.ready().is_some() {
                     self.rating_req = None;

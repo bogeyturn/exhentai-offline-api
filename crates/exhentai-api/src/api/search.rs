@@ -16,8 +16,11 @@ pub struct FilterRequest {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct UpdateFilterRequest {
-    pub name: String,
+pub struct SearchResponse {
+    pub(crate) id: i32,
+    pub(crate) title: String,
+    pub(crate) jpn_title: Option<String>,
+    pub(crate) thumb: Option<String>
 }
 
 impl FilterRequest {

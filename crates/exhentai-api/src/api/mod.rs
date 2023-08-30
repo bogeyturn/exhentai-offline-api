@@ -1,5 +1,5 @@
 use crate::api::info::{get_from_db, ExHentaiResponse};
-use crate::api::search::{FilterRequest, SearchRequest};
+use crate::api::search::{FilterRequest, SearchRequest, SearchResponse};
 #[cfg(feature = "file_stream")]
 use crate::api::streamer::HitomiImages;
 use crate::connections::Connections;
@@ -22,13 +22,19 @@ mod streamer;
 pub async fn search_ex(
     data: Json<SearchRequest>,
     conn: Data<Mutex<Connections>>,
-) -> Json<Vec<ApiDump>> {
+) -> Json<Vec<SearchResponse>> {
+    let v = conn.lock()
+        .unwrap()
+        .get_api_dump_service()
+        .execute(&data.to_string())
+        .unwrap();
     Json(
-        conn.lock()
-            .unwrap()
-            .get_api_dump_service()
-            .execute(&data.to_string())
-            .unwrap(),
+        v.into_iter().map(|v| SearchResponse {
+            id: v.gid,
+            title: v.title.unwrap_or_default(),
+            jpn_title: v.title_jpn,
+            thumb: v.thumb,
+        }).collect()
     )
 }
 
