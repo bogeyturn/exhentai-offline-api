@@ -9,6 +9,7 @@ mod structs;
 mod page_selector;
 mod page_info;
 mod page_search;
+mod searchparser;
 
 // When compiling natively:
 #[cfg(not(target_arch = "wasm32"))]
@@ -42,7 +43,7 @@ fn main() {
             .start(
                 "the_canvas_id", // hardcode it
                 web_options,
-                Box::new(|cc| Box::new(TemplateApp::new(None, cc))),
+                Box::new(|cc| Box::new(GlobalStorage::new(None))),
             )
             .await
             .expect("failed to start eframe");

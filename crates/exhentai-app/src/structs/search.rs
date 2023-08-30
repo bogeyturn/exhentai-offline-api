@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SearchResponse {
     pub id: i32,
     pub title: String,
@@ -8,53 +8,53 @@ pub struct SearchResponse {
     pub thumb: Option<String>
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SearchRequest {
     pub(crate) data: Array,
     pub(crate) order: Order,
     pub(crate) duplicate_filter: Option<String>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct FilterRequest {
     filter: Vec<String>,
     name: String,
 }
 
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Order {
     pub(crate) desc: bool,
     pub(crate) kind: OrderKind,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum OrderKind {
     Id,
     Title,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(untagged)]
 pub enum ItemOrArray {
     Item(Item),
     Array(Array),
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Array {
     pub(crate) or: bool,
     pub(crate) items: Vec<ItemOrArray>,
 }
 
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct Item {
-    not: bool,
-    data: ItemData,
+    pub(crate) not: bool,
+    pub(crate) data: ItemData,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub enum ItemData {
     Id { related: bool, id: i32 },
     Title(String),
@@ -71,7 +71,7 @@ pub enum ItemData {
     Cosplayer(String),
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub enum TagKind {
     Female,
     Male,
