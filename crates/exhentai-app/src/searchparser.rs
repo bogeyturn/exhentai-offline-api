@@ -42,7 +42,7 @@ fn test() {
     panic!();
 }
 
-fn parse_items(s: &str, or_default:bool) -> (Array, Vec<String>) {
+pub fn search_parser(s: &str, or_default:bool) -> (Array, Vec<String>) {
     let mut depth = 0;
     let mut items: Vec<ItemOrArray> = vec![];
     let mut section: Vec<char> = vec![];

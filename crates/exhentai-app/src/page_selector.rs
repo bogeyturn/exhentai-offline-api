@@ -41,7 +41,7 @@ impl App for GlobalStorage {
             if self.open_page_gid.is_some() {
                 info_page(ui);
             }else {
-                search_page(ui, &mut self.search, &self.api_url);
+                search_page(ui, &mut self.search, &self.api_url, self.columns, frame);
             }
         });
     }
@@ -63,12 +63,20 @@ impl Default for GlobalStorage {
                     duplicate_filter: None,
                 },
                 promise: None,
+                ex: Default::default(),
+                images: Default::default(),
                 search_responses: vec![],
                 searched: false,
+                text_edit: "".to_string(),
+                full_color: false,
+                or_default: false,
+                errors: vec![],
+                reset_scroll: false,
+                reset: false,
             },
             open_page_gid: None,
             api_url: Url::parse("http://127.0.0.1:8080").unwrap().into(),
-            columns: 2,
+            columns: 6,
             keys: Default::default(),
         }
     }
