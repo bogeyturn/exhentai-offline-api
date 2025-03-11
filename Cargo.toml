@@ -1,0 +1,7 @@
+[workspace]
+members = [ "crates/downloader", "crates/api", "crates/models", "crates/postgres",]
+
+resolver = "2"
+
+[workspace.dependencies]
+models = {path="crates/models"}

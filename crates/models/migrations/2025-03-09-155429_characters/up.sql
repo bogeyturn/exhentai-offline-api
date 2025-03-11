@@ -1,0 +1,1 @@
+CREATE table IF NOT EXISTS characters (id SERIAL PRIMARY KEY, name TEXT NOT NULL);

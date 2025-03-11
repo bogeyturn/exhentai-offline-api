@@ -1,7 +1,104 @@
 # exhentai-offline-api
 Uses exhentai data dumps
+## TODO: error handling ;D
+
 ## Info:
 This repo is an example how an offline api could look like. Its a quite advanced search and it is able to show all the info.
+url: http://127.0.0.1:8080/search, content-type:application/json
+body:
+```json
+{
+    "data": {
+      "or": true,
+      "items": [{
+        "not": false,
+        "data": {
+          "Title": "Mirror Inma and Devil"
+        }
+      },
+      {
+        "not": false,
+        "data": {
+          "Tag": {
+            "tag":"sole female",
+            "kind": "Female"
+          }
+        }
+      }
+      ]
+    },
+    "order": {
+      "desc": true,
+      "kind": "Id"
+    },
+    "duplicate_filter": null
+}
+```
+
+```json
+[
+  {
+    "id": 3188148,
+    "title": "Mirror Inma and Devil's Seed-part2",
+    "jpn_title": "鏡の淫魔と悪魔のタネ-part2",
+    "thumb": "https://ehgt.org/w/01/709/33797-ufw2bs9j.webp"
+  },
+  {
+    "id": 3188141,
+    "title": "Mirror Inma and Devil's Seed-part1",
+    "jpn_title": "鏡の淫魔と悪魔のタネ-part1",
+    "thumb": "https://ehgt.org/w/01/709/30469-ld96jzu8.webp"
+  },
+  {
+    "id": 3188139,
+    "title": "[NNL (Mary-san)] Asachun Mari!? | 일어났더니 마리가!? (Blue Archive) [Korean] [Team Edge] [Digital]",
+    "jpn_title": "[NNL (メリサン)] 朝ちゅんマリー!? (ブルーアーカイブ) [韓国翻訳] [DL版]",
+    "thumb": "https://ehgt.org/w/01/709/33102-ucdjlqh2.webp"
+  },
+  {
+    "id": 3188138,
+    "title": "[Noblood] Tiffany Valentine (Child's Play)",
+    "jpn_title": null,
+    "thumb": "https://ehgt.org/w/01/575/58575-324naurt.webp"
+  },
+  {
+    "id": 3188133,
+    "title": "(C105) [Navy Blue (神楽七姫)] ホタルは穹と○○したい!! (崩壊スターレイル)",
+    "jpn_title": "(C105) [Navy Blue (神楽七姫)] ホタルは穹と○○したい!! (崩壊スターレイル)",
+    "thumb": "https://ehgt.org/w/01/709/32707-nw022kr3.webp"
+  },
+  {
+    "id": 3188132,
+    "title": "(C105) [くわい屋 (TRNR)] 開拓クエスト・幕間 開拓者のセックス日常 続 (崩壊:スターレイル)",
+    "jpn_title": "(C105) [くわい屋 (TRNR)] 開拓クエスト・幕間 開拓者のセックス日常 続 (崩壊:スターレイル)",
+    "thumb": "https://ehgt.org/w/01/709/32610-lg0ddtp1.webp"
+  },
+  {
+    "id": 3188131,
+    "title": "(C105) [ろっさく工房 (六作)] 運命は開拓者の部屋で (崩壊:スターレイル)",
+    "jpn_title": "(C105) [ろっさく工房 (六作)] 運命は開拓者の部屋で (崩壊:スターレイル)",
+    "thumb": "https://ehgt.org/w/01/709/32609-a4suauan.webp"
+  },
+  {
+    "id": 3188128,
+    "title": "[Pot Detox] I found a girl in the club toilet after she had been raped while asleep, so I took advantage and raped her while she was asleep!!",
+    "jpn_title": null,
+    "thumb": "https://ehgt.org/w/01/709/32170-r1it65g2.webp"
+  },
+  {
+    "id": 3188124,
+    "title": "[Pot Detox] Shuuden Nottara Deisui Gal ga Itanode Suiminkan Rape Shichaimashita | When I got on the last train, I found a drunk girl, so I raped her while she was asleep [English] [MTL]",
+    "jpn_title": "[ぽっとデトックス] 終電乗ったら泥酔ギャルがいたので睡眠姦レイプしちゃいました [英訳]",
+    "thumb": "https://ehgt.org/w/01/709/31253-a56m3kwj.webp"
+  },
+  {
+    "id": 3188121,
+    "title": "[Broad smile (Sukage)] Naisho no Kyoudai Ecchi | Secret Sibling Sex [English] [Shiro Translation] [Digital]",
+    "jpn_title": "[Broad smile (須影)] ないしょの姉弟えっち [英訳] [DL版]",
+    "thumb": "https://ehgt.org/w/01/709/30343-6czbwysa.webp"
+  }
+]
+```
 
 url: http://localhost:8080/info, body: 9, content-type: json
 ```json
@@ -89,7 +186,7 @@ ItemData:
 {"Artist": String}
 ```
 All ItemData variants in rust
-```rs        
+```rs
 pub enum ItemData {
   Id { related: bool, id: i32 },
   Title(String),
@@ -109,23 +206,10 @@ pub enum ItemData {
 
 <br />
 <br />
-Future plans:
-
-- Frontend
-- Error handling
-- exhentai pages
-- hitomi & exhentai fetch from web option
-
-<br />
 
 ## Setup:
-
+TODO: rewrite&publish db
 ```
-Download from https://huggingface.co/datasets/bogeyturn/exhentai-api-dump?not-for-all-audiences=true
-failed.csv 936 kB
-gallery.csv 1.45 GB
-p_mixed.csv 32.8 MB
-
 Download from https://huggingface.co/datasets/bogeyturn/Hitomila-metadata-dump?not-for-all-audiences=true
 hitomi_gallery.zip
 
@@ -134,8 +218,3 @@ gp_crawl.sqlite.7z
 ```
 
 The gp_crawl is optional and need to be set in features. Put the sqlite file into crates/exhentai-api/dbs.
-- Install postgres
-- Create postgres database offline_doujinshi_api
-- Create user postgres with no password
-- Create tables in crates/exhentai-api/migrations
-- Insert data into tables from csv files

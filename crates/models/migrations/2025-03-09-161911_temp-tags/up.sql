@@ -1,0 +1,1 @@
+CREATE table IF NOT EXISTS temp_tags (id SERIAL PRIMARY KEY, name TEXT NOT NULL);

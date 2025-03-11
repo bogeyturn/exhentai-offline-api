@@ -1,0 +1,1 @@
+CREATE table IF NOT EXISTS parodies (id SERIAL PRIMARY KEY, name TEXT NOT NULL);

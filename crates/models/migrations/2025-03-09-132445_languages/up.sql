@@ -1,0 +1,1 @@
+CREATE table IF NOT EXISTS languages (id SERIAL PRIMARY KEY, language TEXT NOT NULL);
